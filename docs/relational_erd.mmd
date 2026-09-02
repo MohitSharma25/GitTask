@@ -1,0 +1,32 @@
+erDiagram
+    clients ||--o{ wallet_audit_logs : logs
+    clients ||--o{ contracts : funds
+    freelancers ||--o{ contracts : works_on
+    clients {
+        uuid id PK
+        varchar name
+        decimal escrow_balance "CHECK non-negative"
+    }
+    wallet_audit_logs {
+        uuid id PK
+        uuid client_id FK
+        decimal amount_changed
+        varchar action_type
+        decimal balance_after
+        timestamptz created_at
+    }
+    freelancers {
+        uuid id PK
+        varchar name
+        double latitude
+        double longitude
+        boolean is_available
+    }
+    contracts {
+        uuid id PK
+        uuid client_id FK
+        uuid freelancer_id FK
+        decimal budget "CHECK positive"
+        varchar status "FUNDED or IN_PROGRESS or COMPLETED"
+        timestamptz created_at
+    }

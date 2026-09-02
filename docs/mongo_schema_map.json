@@ -1,0 +1,45 @@
+{
+  "database": "gigtask",
+  "collections": {
+    "Portfolios": {
+      "description": "Flexible documents storing unstructured freelancer skills and certifications. Optional fields vary per document.",
+      "fields": {
+        "freelancer_id": "string (UUID, matches PostgreSQL freelancers.id)",
+        "name": "string",
+        "skills": "array of strings",
+        "certifications": "optional array of { title: string, issued_by: string, year: int }",
+        "years_experience": "optional int",
+        "bio": "optional string",
+        "hourly_rate": "optional double",
+        "languages": "optional array of strings"
+      },
+      "indexes": ["_id"]
+    },
+    "GigReviews": {
+      "description": "Structured reviews with ratings, skill-tags, and timestamps.",
+      "fields": {
+        "freelancer_id": "string (UUID)",
+        "client_name": "string",
+        "rating": "int (1-5)",
+        "skill_tags": "array of strings",
+        "comment": "string",
+        "created_at": "ISODate"
+      },
+      "indexes": ["_id", "freelancer_id_1"]
+    },
+    "WorkerLocations": {
+      "description": "Real-time geospatial pings of active physical laborers in GeoJSON format. Documents expire 2 hours after created_at.",
+      "fields": {
+        "freelancer_id": "string (UUID)",
+        "location": "GeoJSON Point { type: 'Point', coordinates: [longitude, latitude] }",
+        "is_available": "boolean",
+        "created_at": "ISODate"
+      },
+      "indexes": [
+        "_id",
+        "location_2dsphere",
+        "created_at_1 (TTL, expireAfterSeconds: 7200)"
+      ]
+    }
+  }
+}
