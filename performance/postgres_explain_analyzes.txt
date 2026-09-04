@@ -1,0 +1,28 @@
+Workflow 2: 7-day moving average of contract revenue per freelancer (last 30 days), ranked by DENSE_RANK()
+Query: sql/06_window_analytics.sql
+Index used: idx_contracts_completed_recent ON contracts (created_at) INCLUDE (freelancer_id, budget) WHERE status = 'COMPLETED'
+Data volume: 50,002 contracts (39,289 COMPLETED), 100,002 wallet_audit_logs
+
+EXPLAIN ANALYZE output:
+
+                                                                                         QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ WindowAgg  (cost=830.76..910.54 rows=3989 width=124) (actual time=12.210..14.181 rows=3204 loops=1)
+   ->  Sort  (cost=830.76..840.74 rows=3989 width=84) (actual time=12.195..12.432 rows=3204 loops=1)
+         Sort Key: moving_avg.moving_avg_7d DESC
+         Sort Method: quicksort  Memory: 297kB
+         ->  Subquery Scan on moving_avg  (cost=422.65..592.19 rows=3989 width=84) (actual time=2.133..10.447 rows=3204 loops=1)
+               ->  WindowAgg  (cost=422.65..592.19 rows=3989 width=84) (actual time=2.131..10.101 rows=3204 loops=1)
+                     ->  GroupAggregate  (cost=422.65..522.38 rows=3989 width=52) (actual time=2.107..4.457 rows=3204 loops=1)
+                           Group Key: contracts.freelancer_id, ((contracts.created_at)::date)
+                           ->  Sort  (cost=422.65..432.63 rows=3989 width=26) (actual time=2.080..2.418 rows=3298 loops=1)
+                                 Sort Key: contracts.freelancer_id, ((contracts.created_at)::date)
+                                 Sort Method: quicksort  Memory: 277kB
+                                 ->  Index Only Scan using idx_contracts_completed_recent on contracts  (cost=0.29..184.07 rows=3989 width=26) (actual time=0.169..1.105 rows=3298 loops=1)
+                                       Index Cond: (created_at >= (now() - '30 days'::interval))
+                                       Heap Fetches: 3
+ Planning Time: 5.151 ms
+ Execution Time: 14.555 ms
+(16 rows)
+
+Result: Index Only Scan (no sequential scan). Execution time 14.6 ms vs 177.8 ms with an unbounded seq scan plan (12x faster).
